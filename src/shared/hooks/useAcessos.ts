@@ -1,53 +1,45 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-import { Acesso } from "@/types/Acesso";
+import type { Acesso } from "@/types/store/Acesso";
 
-const useAcessos = () => {
-  const [acesso, setAcesso] = useState<Acesso[]>([]);
+const useAcessos = (usuario?: string) => {
+  const [acesso, setAcesso] = useState<Acesso | null>(null);
   const [loadingAcesso, setLoadingAcesso] = useState(true);
-  const [errorAcesso, setErrorAcesso] = useState<string>("");
+  const [errorAcesso, setErrorAcesso] = useState("");
 
-  // Pegando valores do .env
-  const apiUrl = import.meta.env.VITE_API_URL; // USAR EM PRODUÇÃO 
-  //const apiUrl = import.meta.env.VITE_API_LOCAL_URL;
-  const username = import.meta.env.VITE_USERNAME;
-  const password = import.meta.env.VITE_PASSWORD;
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchAcesso = async () => {
-      try {
-        // monta o header de Basic Auth
-        const authHeader = "Basic " + btoa(`${username}:${password}`);
+      if (!usuario) {
+        setErrorAcesso("Usuário não informado");
+        setLoadingAcesso(false);
+        return;
+      }
 
-        // faz a requisição com axios.get()
-        const response = await axios.get<{ lista: Acesso[] }>(
-          `${apiUrl}/acesso/acessos/`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: authHeader,
-            },
-          }
+      try {
+        const headers = new Headers();
+        headers.set("Content-Type", "application/json");
+
+        const response = await fetch(
+          `${apiUrl}/acesso/acessos/${usuario}`,
+          { headers }
         );
 
-        // axios retorna os dados em response.data
-        setAcesso(response.data.lista);
-      } catch (err: any) {
-        // tratamento de erro específico do axios
-        if (axios.isAxiosError(err)) {
-          setErrorAcesso(
-            err.response?.data?.message || `${err.response?.status} - ${err.message}`
-          );
-        } else {
-          setErrorAcesso(err.message);
+        if (!response.ok) {
+          throw new Error(`Erro: ${response.status} - ${response.statusText}`);
         }
+
+        const data = await response.json();
+        setAcesso(data);
+      } catch (error: any) {
+        setErrorAcesso(error.message);
       } finally {
         setLoadingAcesso(false);
       }
     };
 
     fetchAcesso();
-  }, [apiUrl, username, password]);
+  }, [apiUrl, usuario]);
 
   return { acesso, loadingAcesso, errorAcesso };
 };

@@ -17,7 +17,6 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 
 import { useHumor } from "./useHumor";
-import GraficoHumor from "./components/GraficoHumor";
 import Navbar from "@/modules/users/components/Navbar";
 import Logo from "@/assets/images/logo_unimed.png";
 import Logo2 from "@/assets/images/pinheiro.jpg";
@@ -185,7 +184,6 @@ export default function HumorPage() {
             </IconButton>
           </DialogTitle>
           <DialogContent>
-            <GraficoHumor id_ws={perfil.id!} />
           </DialogContent>
         </Dialog>
       </Paper>

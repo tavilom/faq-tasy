@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
-import { PrismaServiceFaqTasyNovo } from './prisma.service';
+import {
+  PrismaServiceFaqTasyNovo,
+  PrismaServiceOrganograma,
+} from './prisma.service';
 
 @Module({
-  providers: [PrismaServiceFaqTasyNovo],
-  exports: [PrismaServiceFaqTasyNovo]
+  providers: [PrismaServiceFaqTasyNovo, PrismaServiceOrganograma],
+  exports: [PrismaServiceFaqTasyNovo, PrismaServiceOrganograma],
 })
 export class PrismaModule {}

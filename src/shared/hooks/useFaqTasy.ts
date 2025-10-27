@@ -10,7 +10,9 @@ const useFaqTasy = () => {
     const [updatingFatTasy, setUpdatingFatTasy] = useState(false);
     const [updateError, setUpdateError] = useState<string | null>(null);
 
-    const apiUrl = "http://localhost:9923/faq_tasy/faq_tasy";
+    const apiUrl = import.meta.env.VITE_API_URL;
+
+    // const apiUrl = "http://localhost:9923/faq_tasy/faq_tasy";
 
     const fetchFaq =  useCallback(async () => {
         try {
@@ -20,7 +22,7 @@ const useFaqTasy = () => {
             const headers = new Headers();
             headers.set("Content-type", "application/json");
 
-            const response = await fetch(apiUrl, { headers });
+            const response = await fetch(`${apiUrl}/faq_tasy/faq_tasy/`);
             if (!response.ok) {
                 throw new Error(`Erro: ${response.status} - ${response.statusText}`);
             }
