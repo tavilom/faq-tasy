@@ -1,20 +1,33 @@
 import React, { Suspense } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import type { ReactElement } from "react";
 
-const HumorPage = React.lazy(() => import("@/modules/users/HumorPage"));
+export interface AppRoute {
+  path: string;
+  element: ReactElement;
+  children?: AppRoute[];
+}
+
+import { HomeRoutes } from "./Home.routes";
+
+const allRoutes: AppRoute[] = [...HomeRoutes];
 
 export const AppRoutes: React.FC = () => {
   return (
-    <div>
-      <Suspense fallback={null}>
-        <Routes>
-          {/* Suas rotas aqui */}
-          <Route index element={<HumorPage />} />
-          <Route path="/users" element={<HumorPage />} />
-
-          {/* Adicione outras rotas conforme necessário */}
-        </Routes>
-      </Suspense>
-    </div>
+    <Suspense fallback={null}>
+      <Routes>
+        {allRoutes.map(({ path, element, children }) => (
+          <Route key={path} path={path} element={element}>
+            {children?.map(({ path: childPath, element: childElement }) => (
+              <Route
+                key={childPath}
+                path={childPath}
+                element={childElement}
+              />
+            ))}
+          </Route>
+        ))}
+      </Routes>
+    </Suspense>
   );
 };

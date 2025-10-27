@@ -3,11 +3,14 @@ import { createTheme } from "@mui/material/styles";
 
 export const theme = createTheme({
   typography: {
-    fontFamily: 'Poppins, sans-serif',
+    fontFamily: '"Poppins", sans-serif',
   },
   palette: {
+    primary: {
+      main: '#008c50'
+    },
     background: {
-      default: "#D9D9D9", // mesma cor que você foi colacado no CSS
+      default: "#eeeeee", 
     },
   },
 });

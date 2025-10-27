@@ -49,7 +49,7 @@ export type NomeOrganogramaProps = {
 };
 
 const BASE_API =
-  (import.meta as any)?.env?.VITE_API_BASE ?? "http://localhost:9923/api";
+  (import.meta as any)?.env?.VITE_API_BASE ?? "http://localhost:9986/api";
 const DEFAULT_CENTROS = `${BASE_API}/organograma/centros`;
 const DEFAULT_SETORES = `${BASE_API}/organograma/setores`;
 // ajuste se o seu backend usar outro caminho:
