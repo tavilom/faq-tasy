@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL_ORGANOGRAMA")
+}
+
+model acessos {
+  id         Int    @id @default(autoincrement())
+  usuario    String @db.VarChar(45)
+  permissoes String @db.VarChar(1000)
+}
+
+model areas {
+  id   Int    @id @default(autoincrement())
+  nome String @db.VarChar(45)
+}
+
+model centro_custo {
+  id                  Int     @id @default(autoincrement())
+  nome                String  @db.VarChar(1000)
+  nome_totvs          String  @db.VarChar(1000)
+  nome_organograma    String? @db.VarChar(45)
+  codigo_centro_custo String  @db.VarChar(45)
+  area_id             Int
+  setor_id            Int
+}
+
+model colaboradores {
+  id              Int       @id @default(autoincrement())
+  nome            String    @db.VarChar(1000)
+  nome_totvs      String?   @db.VarChar(1000)
+  matricula       String?   @db.VarChar(45)
+  cargo           String?   @db.VarChar(1000)
+  foto            String?   @db.VarChar(1000)
+  data_admissao   DateTime? @db.Date
+  data_demissao   DateTime? @db.Date
+  hierarquia_id   Int?
+  area_id         String?   @db.VarChar(1000)
+  setor_id        String?   @db.VarChar(1000)
+  centro_custo_id String?   @db.VarChar(1000)
+  comite_id       String?   @db.VarChar(1000)
+  comissao_id     String?   @db.VarChar(1000)
+  programa_id     String?   @db.VarChar(1000)
+  equipe_id       String?   @db.VarChar(1000)
+  ws_id           String?   @db.VarChar(45)
+  ativo           Int?      @default(1) @db.TinyInt
+}
+
+model comissoes {
+  id   Int    @id @default(autoincrement())
+  nome String @db.VarChar(1000)
+}
+
+model comites {
+  id   Int    @id @default(autoincrement())
+  nome String @db.VarChar(1000)
+}
+
+model equipes {
+  id              Int     @id @default(autoincrement())
+  nome            String  @db.VarChar(1000)
+  centro_custo_id String? @db.VarChar(1000)
+}
+
+model hierarquia {
+  id    Int    @id @default(autoincrement())
+  nome  String @db.VarChar(300)
+  valor Int
+}
+
+model logs {
+  id      Int      @id @default(autoincrement())
+  ip      String   @db.VarChar(45)
+  usuario String   @db.VarChar(45)
+  acao    String   @db.VarChar(5000)
+  data    DateTime @default(now()) @db.Timestamp(0)
+}
+
+model programas {
+  id           Int     @id @default(autoincrement())
+  nome         String  @db.VarChar(1000)
+  centro_custo String? @db.VarChar(45)
+}
+
+model setores {
+  id               Int     @id @default(autoincrement())
+  nome             String  @db.VarChar(45)
+  nome_organograma String? @db.VarChar(45)
+  area_id          Int
+}

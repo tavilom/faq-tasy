@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/faq_tasy_novo"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL_FAQ_TASY_NOVO")
+}
+
+model faq_tasy {
+  id          Int       @id @default(autoincrement())
+  question    String?   @db.VarChar(300)
+  description String?   @db.Text
+  nome_video  String?   @db.VarChar(255)
+  criado_em   DateTime? @default(now()) @db.Timestamp(0)
+  id_ws       String?   @db.VarChar(100)
+}
