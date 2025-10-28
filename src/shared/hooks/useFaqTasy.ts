@@ -7,7 +7,7 @@ const useFaqTasy = () => {
   const [errorFaqTasy, setErrorFaqTasy] = useState("");
 
   //estado específicos para update
-  const [updatingFatTasy, setUpdatingFatTasy] = useState(false);
+  const [updatingFaqTasy, setUpdatingFaqTasy] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
   //const apiUrl = import.meta.env.VITE_API_URL;
@@ -40,7 +40,7 @@ const useFaqTasy = () => {
   const updateFaqTasyPartial = useCallback(
     async (id: number, patch: Partial<FaqTasy>): Promise<FaqTasy | null> => {
       setUpdateError(null);
-      setUpdatingFatTasy(true);
+      setUpdatingFaqTasy(true);
       try {
         const res = await fetch(`${apiUrl}/${id}`, {
           method: "PATCH",
@@ -67,7 +67,7 @@ const useFaqTasy = () => {
         setUpdateError(e?.message ?? "Falha ao atualizar faq");
         return null;
       } finally {
-        setUpdatingFatTasy(false);
+        setUpdatingFaqTasy(false);
       }
     },
     [apiUrl]
@@ -83,7 +83,7 @@ const useFaqTasy = () => {
     errorFaqTasy,
     apiUrl,
     refreshFaqTasy: fetchFaq,
-    updatingFatTasy,
+    updatingFaqTasy,
     updateError,
     updateFaqTasyPartial,
   };

@@ -70,8 +70,8 @@ export class FaqTasyService {
     }
 
     // ===== nome_video =====
-    if (Object.prototype.hasOwnProperty.call(payload, 'video_nome')) {
-      const v = (payload as any).video_nome;
+    if (Object.prototype.hasOwnProperty.call(payload, 'nome_video')) {
+      const v = (payload as any).nome_video;
 
       const ValorInvalido =
         v === undefined ||
@@ -79,7 +79,7 @@ export class FaqTasyService {
         (typeof v === 'string' && v.trim() === '') ||
         typeof v === 'boolean';
       if (!ValorInvalido) {
-        data.video_nome = String(v);
+        data.nome_video = String(v);
       }
     }
 

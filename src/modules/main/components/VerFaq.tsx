@@ -17,11 +17,17 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
 import useFaqTasy from "@/shared/hooks/useFaqTasy";
+import AtualizarFaqTasy from "./AtualizarFaqTase";
 import { motion } from "framer-motion";
 import { pageVariants } from "@/shared/styles/animationStyle";
 
 const VerFaqTasy = () => {
-  const { faqtasy, loadingFaqTasy, errorFaqTasy, refreshFaqTasy: fetchFaq } = useFaqTasy();
+  const {
+    faqtasy,
+    loadingFaqTasy,
+    errorFaqTasy,
+    refreshFaqTasy: fetchFaq,
+  } = useFaqTasy();
 
   const listaFaqTasy = Array.isArray(faqtasy) ? faqtasy : [];
 
@@ -48,7 +54,9 @@ const VerFaqTasy = () => {
     const lowerSearch = search.toLowerCase();
     return listaFaqTasy.filter((f) => {
       return (
-        String(f?.id ?? "").toLowerCase().includes(lowerSearch) ||
+        String(f?.id ?? "")
+          .toLowerCase()
+          .includes(lowerSearch) ||
         (f?.question?.toLowerCase().includes(lowerSearch) ?? false) ||
         // corrigido: toLocaleLowerCase com "o" minúsculo
         (f?.description?.toLowerCase().includes(lowerSearch) ?? false) ||
@@ -59,7 +67,12 @@ const VerFaqTasy = () => {
 
   if (loadingFaqTasy) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="50vh"
+      >
         <CircularProgress />
       </Box>
     );
@@ -67,14 +80,25 @@ const VerFaqTasy = () => {
 
   if (errorFaqTasy) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="50vh"
+      >
         <Alert severity="error">{errorFaqTasy}</Alert>
       </Box>
     );
   }
 
   return (
-    <motion.div initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }} variants={pageVariants}>
+    <motion.div
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={{ duration: 0.4 }}
+      variants={pageVariants}
+    >
       <Box
         sx={{
           width: "100%",
@@ -86,13 +110,16 @@ const VerFaqTasy = () => {
           gap: 2,
         }}
       >
-        <Typography variant="h5" sx={{ textAlign: isMobile ? "center" : "left" }}>
-          FAQ Tasy
+        <Typography
+          variant="h5"
+          sx={{ textAlign: isMobile ? "center" : "left" }}
+        >
+          Pesquisar...
         </Typography>
 
         <TextField
           fullWidth
-          label="Pesquise por pergunta, descrição ou vídeo"
+          label="Pesquise por pergunta ou descrição"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           variant="outlined"
@@ -102,15 +129,22 @@ const VerFaqTasy = () => {
           <Typography align="center">Nenhuma FAQ encontrada.</Typography>
         ) : (
           <Box>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ mb: 1 }}
+            >
               <Typography variant="subtitle2">
                 Resultados: {filteredFaqTasy.length}
               </Typography>
-              {/* <Chip label="Exibindo em Accordion" size="small" /> */}
             </Stack>
 
             {filteredFaqTasy.map((f) => {
               const key = f?.id ?? `${f?.question}-${Math.random()}`;
+              const summaryId = `faq-summary-${key}`;
+              const detailsId = `faq-details-${key}`;
+
               return (
                 <Accordion
                   key={key}
@@ -124,6 +158,8 @@ const VerFaqTasy = () => {
                   }}
                 >
                   <AccordionSummary
+                    id={summaryId}
+                    aria-controls={detailsId}
                     expandIcon={<ExpandMoreIcon />}
                     sx={{
                       "& .MuiAccordionSummary-content": {
@@ -133,32 +169,45 @@ const VerFaqTasy = () => {
                       },
                     }}
                   >
-                    <Typography sx={{ flex: 1, fontWeight: 600, wordBreak: "break-word" }}>
+                    <Typography
+                      sx={{ flex: 1, fontWeight: 600, wordBreak: "break-word" }}
+                    >
                       {f?.question ?? "Pergunta não informada"}
                     </Typography>
 
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={(e) => {
-                        e.stopPropagation(); 
-                        handleOpenModal(f);
-                      }}
-                      aria-label="Editar FAQ"
+                    {/* Área de ações: impede que clique/foco propague para o Summary */}
+                    <Box
+                      onClick={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.stopPropagation()}
+                      sx={{ display: "flex", alignItems: "center" }}
                     >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
+                      <IconButton
+                        component="div" // ← evita <button> dentro de <button>
+                        size="small"
+                        color="primary"
+                        aria-label="Editar FAQ"
+                        onClick={() => handleOpenModal(f)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </AccordionSummary>
 
-                  <Divider />
+                  <Divider sx={{ my: 2 }} />
 
-                  <AccordionDetails>
+                  <AccordionDetails id={detailsId} aria-labelledby={summaryId}>
                     <Stack spacing={1.5}>
                       <Box>
                         <Typography variant="caption" color="text.secondary">
                           Descrição
                         </Typography>
-                        <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                          }}
+                        >
                           {f?.description ?? "-"}
                         </Typography>
                       </Box>
@@ -167,12 +216,13 @@ const VerFaqTasy = () => {
                         <Typography variant="caption" color="text.secondary">
                           Vídeo demonstrativo
                         </Typography>
-                        <Typography variant="body2" sx={{ wordBreak: "break-word" }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ wordBreak: "break-word" }}
+                        >
                           {f?.nome_video ?? "-"}
                         </Typography>
                       </Box>
-
-                    
                     </Stack>
                   </AccordionDetails>
                 </Accordion>
@@ -181,12 +231,12 @@ const VerFaqTasy = () => {
           </Box>
         )}
 
-        {/* <AtualizarFaqTasy
+        <AtualizarFaqTasy
           open={openModal}
           onClose={handleCloseModal}
           faqSelecionada={faqSelecionada}
           refreshLista={fetchFaq}
-        /> */}
+        />
       </Box>
     </motion.div>
   );
