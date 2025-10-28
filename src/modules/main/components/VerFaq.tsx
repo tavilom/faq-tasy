@@ -3,38 +3,30 @@ import {
   Box,
   CircularProgress,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Alert,
   TextField,
   IconButton,
-  Card,
-  CardContent,
-  CardActions,
   useMediaQuery,
   useTheme,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Divider,
+  Stack,
 } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit"
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import EditIcon from "@mui/icons-material/Edit";
 import useFaqTasy from "@/shared/hooks/useFaqTasy";
 import { motion } from "framer-motion";
 import { pageVariants } from "@/shared/styles/animationStyle";
 
 const VerFaqTasy = () => {
-  const {
-    faqtasy,
-    loadingFaqTasy,
-    errorFaqTasy,
-    refreshFaqTasy: fetchFaq,
-  } = useFaqTasy();
+  const { faqtasy, loadingFaqTasy, errorFaqTasy, refreshFaqTasy: fetchFaq } = useFaqTasy();
 
   const listaFaqTasy = Array.isArray(faqtasy) ? faqtasy : [];
 
-  const [serach, setSearch] = useState("");
+  // corrigido: serach -> search
+  const [search, setSearch] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [faqSelecionada, setFaqSelecionada] = useState<any>(null);
 
@@ -52,27 +44,22 @@ const VerFaqTasy = () => {
   };
 
   const filteredFaqTasy = useMemo(() => {
-    if (!serach) return listaFaqTasy;
-    const lowerSearch = serach.toLowerCase();
+    if (!search) return listaFaqTasy;
+    const lowerSearch = search.toLowerCase();
     return listaFaqTasy.filter((f) => {
       return (
-        String(f?.id ?? "")
-          .toLowerCase()
-          .includes(lowerSearch) ||
+        String(f?.id ?? "").toLowerCase().includes(lowerSearch) ||
         (f?.question?.toLowerCase().includes(lowerSearch) ?? false) ||
-        (f?.description?.toLocaleLowerCase().includes(lowerSearch) ?? false)
+        // corrigido: toLocaleLowerCase com "o" minúsculo
+        (f?.description?.toLowerCase().includes(lowerSearch) ?? false) ||
+        (f?.nome_video?.toLowerCase().includes(lowerSearch) ?? false)
       );
     });
-  }, [serach, listaFaqTasy]);
+  }, [search, listaFaqTasy]);
 
   if (loadingFaqTasy) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="50vh"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
         <CircularProgress />
       </Box>
     );
@@ -80,25 +67,14 @@ const VerFaqTasy = () => {
 
   if (errorFaqTasy) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="50vh"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
         <Alert severity="error">{errorFaqTasy}</Alert>
       </Box>
     );
   }
 
   return (
-    <motion.div
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      transition={{ duration: 0.4 }}
-      variants={pageVariants}
-    >
+    <motion.div initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }} variants={pageVariants}>
       <Box
         sx={{
           width: "100%",
@@ -107,118 +83,102 @@ const VerFaqTasy = () => {
           py: 2,
           display: "flex",
           flexDirection: "column",
+          gap: 2,
         }}
       >
-        <Typography
-          variant="h5"
-          sx={{ mb: 2, textAlign: isMobile ? "center" : "left" }}
-        ></Typography>
+        <Typography variant="h5" sx={{ textAlign: isMobile ? "center" : "left" }}>
+          FAQ Tasy
+        </Typography>
 
-        <Box sx={{ mb: 2 }}>
-          <TextField
-            fullWidth
-            label="Pesquise por Nome ou descrição"
-            value={serach}
-            onChange={(e) => setSearch(e.target.value)}
-            variant="outlined"
-          ></TextField>
-        </Box>
+        <TextField
+          fullWidth
+          label="Pesquise por pergunta, descrição ou vídeo"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          variant="outlined"
+        />
 
         {filteredFaqTasy.length === 0 ? (
-          <Typography align="center">Nenhuma Faq encontrada.</Typography>
-        ) : isMobile ? (
-          <Box display="flex" flexDirection="column" gap={2}>
-            {filteredFaqTasy.map((f) => (
-              <Card
-                key={f.id ?? Math.random()}
-                variant="outlined"
-                sx={{
-                  transition: "all 0.2s ease-in-out",
-                  cursor: "pointer",
-                  "&:hover": {
-                    boxShadow: 6,
-                    transform: "translateY(-2px)",
-                  },
-                }}
-              >
-                <CardContent>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    Pergunta: {f?.question ?? "-"}
-                  </Typography>
-                  <Typography variant="h6">
-                    Descrição: {f?.description ?? "-"}
-                  </Typography>
-                  <Typography variant="body2">
-                    Video Descritivo: {f?.nome_video ?? "-"}
-                  </Typography>
-                </CardContent>
-                <CardActions sx={{ justifyContent: "flex-end" }}>
-                  <IconButton
-                    color="primary"
-                    onClick={() => handleOpenModal(f)}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </CardActions>
-              </Card>
-            ))}
-          </Box>
+          <Typography align="center">Nenhuma FAQ encontrada.</Typography>
         ) : (
-          <TableContainer
-            component={Paper}
-            sx={{
-              width: "100%",
-              flex: 1,
-              overflow: "visible",
-              boxShadow: "none",
-            }}
-          >
-            <Table
-              size="medium"
-              sx={{
-                width: "100%",
-                tableLayout: "auto",
-              }}
-            >
-              <TableHead>
-                <TableRow>
-                  <TableCell>Pergunta</TableCell>
-                  <TableCell>Descrição</TableCell>
-                  <TableCell>Video Desmonstrativo</TableCell>
-                  <TableCell align="center">Ações</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredFaqTasy.map((f) => (
-                  <TableRow key={f?.question ?? Math.random()}>
-                    <TableCell
-                      sx={{ whiteSpace: "normal", wordBreak: "break-word" }}
+          <Box>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2">
+                Resultados: {filteredFaqTasy.length}
+              </Typography>
+              {/* <Chip label="Exibindo em Accordion" size="small" /> */}
+            </Stack>
+
+            {filteredFaqTasy.map((f) => {
+              const key = f?.id ?? `${f?.question}-${Math.random()}`;
+              return (
+                <Accordion
+                  key={key}
+                  disableGutters
+                  sx={{
+                    mb: 1,
+                    borderRadius: 1,
+                    overflow: "hidden",
+                    "&::before": { display: "none" },
+                    border: (theme) => `1px solid ${theme.palette.divider}`,
+                  }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    sx={{
+                      "& .MuiAccordionSummary-content": {
+                        alignItems: "center",
+                        gap: 2,
+                        mr: 1,
+                      },
+                    }}
+                  >
+                    <Typography sx={{ flex: 1, fontWeight: 600, wordBreak: "break-word" }}>
+                      {f?.question ?? "Pergunta não informada"}
+                    </Typography>
+
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={(e) => {
+                        e.stopPropagation(); 
+                        handleOpenModal(f);
+                      }}
+                      aria-label="Editar FAQ"
                     >
-                      {f?.question ?? "-"}
-                    </TableCell>
-                    <TableCell
-                      sx={{ whiteSpace: "normal", wordBreak: "break-word" }}
-                    >
-                      {f?.description ?? "-"}
-                    </TableCell>
-                    <TableCell
-                      sx={{ whiteSpace: "normal", wordBreak: "break-word" }}
-                    >
-                      {f?.nome_video ?? "-"}
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        color="primary"
-                        onClick={() => handleOpenModal(f)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </AccordionSummary>
+
+                  <Divider />
+
+                  <AccordionDetails>
+                    <Stack spacing={1.5}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Descrição
+                        </Typography>
+                        <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                          {f?.description ?? "-"}
+                        </Typography>
+                      </Box>
+
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Vídeo demonstrativo
+                        </Typography>
+                        <Typography variant="body2" sx={{ wordBreak: "break-word" }}>
+                          {f?.nome_video ?? "-"}
+                        </Typography>
+                      </Box>
+
+                    
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+              );
+            })}
+          </Box>
         )}
 
         {/* <AtualizarFaqTasy
