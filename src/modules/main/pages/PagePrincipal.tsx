@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { pageVariants } from "@/shared/styles/animationStyle";
 import PaperBackground from "@/shared/components/PaperBackground";
 import { useNavigate } from "react-router-dom";
+import VerFaqTasy from "../components/VerFaq";
 
 const Inicial = () => {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ const Inicial = () => {
       <Box p={2}>
         <PaperBackground>
           <Typography variant="h1" sx={{ m: 3, fontSize: 28 }}>
-            FAQ
+            FAQ Tasy
           </Typography>
 
           <Divider sx={{ my: 2 }} />
@@ -35,6 +36,7 @@ const Inicial = () => {
             Adicionar FAQ
           </Button>
 
+          <VerFaqTasy />
         </PaperBackground>
       </Box>
     </motion.div>
