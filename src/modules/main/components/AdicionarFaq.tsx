@@ -96,7 +96,7 @@ const AdicionarFaq: React.FC = () => {
       </Stack>
 
       {submitError && <Alert severity="error" sx={{ mb: 2 }}>{submitError}</Alert>}
-      {created && <Alert severity="success" sx={{ mb: 2 }}>FAQ criada com id {created.id}</Alert>}
+      {created && <Alert severity="success" sx={{ mb: 2 }}>Cadastrado com Sucesso!</Alert>}
 
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <Stack spacing={2}>
