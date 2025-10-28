@@ -1,7 +1,13 @@
 // AdicionarFaq.tsx
 import React, { useCallback, useContext, useState } from "react";
 import {
-  Box, Stack, TextField, Button, Typography, CircularProgress, Alert,
+  Box,
+  Stack,
+  TextField,
+  Button,
+  Typography,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import useFaqTasy from "@/shared/hooks/useFaqTasy";
 import type { FaqTasy } from "@/types/store/FaqTasy";
@@ -13,9 +19,13 @@ type FaqCreatePayload = Omit<FaqTasy, "id" | "criado_em"> & {
   criado_em: string | null;
 };
 
-type FormState = { question: string; description: string; nome_video: string; };
+type FormState = { question: string; description: string; nome_video: string };
 
-const initialForm: FormState = { question: "", description: "", nome_video: "" };
+const initialForm: FormState = {
+  question: "",
+  description: "",
+  nome_video: "",
+};
 
 // YYYY-MM-DDTHH:mm:ss (sem Z e sem offset) no horário local do navegador
 function formatLocalNaive(): string {
@@ -52,7 +62,7 @@ const AdicionarFaq: React.FC = () => {
       question: form.question || null,
       description: form.description || null,
       nome_video: form.nome_video || null,
-      criado_em: formatLocalNaive(), // << envia local sem fuso
+      criado_em: formatLocalNaive(),
       id_ws: ws_id,
     };
   }, [ws_id, form]);
@@ -90,22 +100,72 @@ const AdicionarFaq: React.FC = () => {
 
   return (
     <Box component="section" sx={{ p: 2 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 2 }}
+      >
         <Typography variant="h6">Adicionar FAQ</Typography>
-        <Button variant="outlined" onClick={() => navigate(-1)}>Voltar</Button>
+        <Button variant="outlined" onClick={() => navigate(-1)}>
+          Voltar
+        </Button>
       </Stack>
 
-      {submitError && <Alert severity="error" sx={{ mb: 2 }}>{submitError}</Alert>}
-      {created && <Alert severity="success" sx={{ mb: 2 }}>Cadastrado com Sucesso!</Alert>}
+      {submitError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {submitError}
+        </Alert>
+      )}
+      {created && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          Cadastrado com Sucesso!
+        </Alert>
+      )}
 
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <Stack spacing={2}>
-          <TextField label="Pergunta" value={form.question} onChange={handleChange("question")} fullWidth />
-          <TextField label="Descrição" value={form.description} onChange={handleChange("description")} fullWidth multiline minRows={3} />
-          <TextField label="Nome do Vídeo" value={form.nome_video} onChange={handleChange("nome_video")} fullWidth />
+          <TextField
+            label="Pergunta"
+            value={form.question}
+            onChange={handleChange("question")}
+            fullWidth
+          />
+          <TextField
+            label="Descrição"
+            value={form.description}
+            onChange={handleChange("description")}
+            fullWidth
+            multiline
+            minRows={3}
+          />
+          <TextField
+            label="Nome do Vídeo"
+            value={form.nome_video}
+            onChange={handleChange("nome_video")}
+            fullWidth
+          />
           <Box>
-            <Button type="submit" variant="contained" disabled={submitting}
-              startIcon={submitting ? <CircularProgress size={18} /> : undefined}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={submitting}
+              startIcon={
+                submitting ? <CircularProgress size={18} /> : undefined
+              }
+              sx={{
+                backgroundColor: "transparent",
+                backgroundImage: "linear-gradient(to right, #000000, #003366)",
+                color: "#fff",
+                backgroundSize: "200%",
+                transition: "0.4s",
+                "&:hover": {
+                  backgroundPosition: "right center",
+                  backgroundImage:
+                    "linear-gradient(to right, #000000, #003366)",
+                },
+              }}
+            >
               {submitting ? "Salvando..." : "Salvar"}
             </Button>
           </Box>

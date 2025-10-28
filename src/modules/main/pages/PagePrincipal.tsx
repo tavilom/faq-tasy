@@ -31,7 +31,18 @@ const Inicial = () => {
           <Button
             variant="contained"
             onClick={handleGoAddFaq}
-            sx={{ mt: 2 }}
+            sx={{
+              mt: 2,
+              backgroundColor: "transparent",
+              backgroundImage: "linear-gradient(to right, #000000, #003366)",
+              color: "#fff",
+              backgroundSize: "200%",
+              transition: "0.4s",
+              "&:hover": {
+                backgroundPosition: "right center",
+                backgroundImage: "linear-gradient(to right, #000000, #003366)",
+              },
+            }}
           >
             Adicionar FAQ
           </Button>

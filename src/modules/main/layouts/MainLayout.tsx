@@ -3,12 +3,10 @@ import {
   AppBar,
   Box,
   CssBaseline,
-  IconButton,
   Toolbar,
   Typography,
   Paper,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
 import { Outlet } from "react-router-dom";
 import { AuthContext } from "@/stores/AuthContext";
 
@@ -28,16 +26,13 @@ export const MainLayout: React.FC = () => {
         position="fixed"
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          background: "#00995d",
-          borderBottomLeftRadius: 16,
-          borderBottomRightRadius: 16,
+          background: "linear-gradient(to right, #000000, #003366)" ,
+          // borderBottomLeftRadius: 16,
+          // borderBottomRightRadius: 16,
         }}
       >
         <Toolbar>
-          <IconButton color="inherit" edge="start" sx={{ mr: 2 }}>
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap>
+          <Typography variant="h5" noWrap>
             FAQ Tasy
           </Typography>
         </Toolbar>

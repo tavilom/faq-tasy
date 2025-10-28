@@ -175,18 +175,21 @@ const VerFaqTasy = () => {
                       {f?.question ?? "Pergunta não informada"}
                     </Typography>
 
-                    {/* Área de ações: impede que clique/foco propague para o Summary */}
                     <Box
                       onClick={(e) => e.stopPropagation()}
                       onFocus={(e) => e.stopPropagation()}
                       sx={{ display: "flex", alignItems: "center" }}
                     >
                       <IconButton
-                        component="div" // ← evita <button> dentro de <button>
+                        component="div"
                         size="small"
-                        color="primary"
                         aria-label="Editar FAQ"
                         onClick={() => handleOpenModal(f)}
+                        sx={{
+                          "& svg": {
+                            color: "#003366", 
+                          },
+                        }}
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
