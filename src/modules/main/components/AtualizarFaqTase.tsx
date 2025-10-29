@@ -127,7 +127,7 @@ const AtualizarFaqTasy = ({
           pb: fullScreen ? 2 : 3,
         }}
       >
-        <Button onClick={handleClose} color="inherit" variant="outlined" disabled={updatingFaqTasy}>
+        <Button onClick={handleClose} color="primary" variant="outlined" disabled={updatingFaqTasy}>
           Cancelar
         </Button>
         <Button

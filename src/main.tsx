@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { createRoot } from "react-dom/client";
-import { theme } from "./theme";
+import { theme } from "./styles/themes/index.ts";
 import { AuthContextProvider } from "./stores/AuthContext.tsx";
 
 import "./index.css";

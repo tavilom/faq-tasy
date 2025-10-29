@@ -3,7 +3,7 @@ import { createTheme } from "@mui/material";
 export const theme = createTheme({
   palette: {
     primary: {
-      main: '#003366' // original #008c50
+      main: '#003366' 
     },
     secondary: {
       main: '#efefef'
@@ -13,8 +13,7 @@ export const theme = createTheme({
       dark: '#efefef',
       contrastText: '#003366'
     }
-  },
-  custom: {
-    bgGradient: "linear-gradient(to right, #000000, #003366)"
   }
 });
+
+

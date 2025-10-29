@@ -1,4 +1,3 @@
-// AdicionarFaq.tsx
 import React, { useCallback, useContext, useState } from "react";
 import {
   Box,
@@ -14,7 +13,7 @@ import type { FaqTasy } from "@/types/store/FaqTasy";
 import { AuthContext } from "@/stores/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-// payload de criação (criado_em como string "naive")
+
 type FaqCreatePayload = Omit<FaqTasy, "id" | "criado_em"> & {
   criado_em: string | null;
 };
@@ -27,7 +26,7 @@ const initialForm: FormState = {
   nome_video: "",
 };
 
-// YYYY-MM-DDTHH:mm:ss (sem Z e sem offset) no horário local do navegador
+
 function formatLocalNaive(): string {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -41,6 +40,8 @@ function formatLocalNaive(): string {
 }
 
 const AdicionarFaq: React.FC = () => {
+
+
   const { apiUrl, refreshFaqTasy } = useFaqTasy();
   const auth = useContext(AuthContext);
   const navigate = useNavigate();
@@ -107,7 +108,7 @@ const AdicionarFaq: React.FC = () => {
         sx={{ mb: 2 }}
       >
         <Typography variant="h6">Adicionar FAQ</Typography>
-        <Button variant="outlined" onClick={() => navigate(-1)}>
+        <Button variant="outlined" onClick={() => navigate(-1)}  color="primary">
           Voltar
         </Button>
       </Stack>
