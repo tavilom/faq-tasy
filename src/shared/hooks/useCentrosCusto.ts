@@ -7,7 +7,7 @@ const useCentrosCusto = () => {
     const [errorCentroCusto, setErrorCentroCusto] = useState("");
 
     // Pegando valores do .env
-    const apiUrl = 'http://localhost:9986/api/organograma/centros';
+    const apiUrl = 'http://192.168.74.179:9986/api/organograma/centros';
 
     useEffect(() => {
         const fetchCentroCusto = async () => {

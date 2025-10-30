@@ -9,14 +9,15 @@ import {
 } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import { AuthContext } from "@/stores/AuthContext";
+import { logoPinheiroPNG } from "@/utils/functions";
+//import { logoUnimed } from "@/utils/functions";
+
 
 export const MainLayout: React.FC = () => {
   const auth = useContext(AuthContext);
   if (!auth) {
     throw new Error("MainLayout must be used within an AuthContextProvider");
   }
-
-
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -26,12 +27,26 @@ export const MainLayout: React.FC = () => {
         position="fixed"
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          background: "linear-gradient(to right, #000000, #003366)" ,
+          background: "linear-gradient(to right, #000000, #003366)",
           // borderBottomLeftRadius: 16,
           // borderBottomRightRadius: 16,
         }}
       >
         <Toolbar>
+          <Box
+            component="img"
+            src={logoPinheiroPNG}
+            alt="Logo"
+            sx={{ height: 40, mr: 5 }} 
+          />
+          {/* <Box
+            component="img"
+            src={logoUnimed} 
+            alt="Logo"
+            sx={{ height: 42, mr: 1 }}
+          /> */}
+
+          
           <Typography variant="h5" noWrap>
             FAQ Tasy
           </Typography>

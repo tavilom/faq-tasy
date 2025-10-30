@@ -27,11 +27,11 @@ const VerFaqTasy = () => {
     loadingFaqTasy,
     errorFaqTasy,
     refreshFaqTasy: fetchFaq,
+    apiUrl, 
   } = useFaqTasy();
 
   const listaFaqTasy = Array.isArray(faqtasy) ? faqtasy : [];
 
-  // corrigido: serach -> search
   const [search, setSearch] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [faqSelecionada, setFaqSelecionada] = useState<any>(null);
@@ -49,16 +49,19 @@ const VerFaqTasy = () => {
     setFaqSelecionada(null);
   };
 
+  // endpoint base SEM query string e sem barra no fim (ex.: /api/faq_tasy/faq_tasy)
+  const viewBase = useMemo(
+    () => (apiUrl ?? "").split("?")[0].replace(/\/+$/, ""),
+    [apiUrl]
+  );
+
   const filteredFaqTasy = useMemo(() => {
     if (!search) return listaFaqTasy;
     const lowerSearch = search.toLowerCase();
     return listaFaqTasy.filter((f) => {
       return (
-        String(f?.id ?? "")
-          .toLowerCase()
-          .includes(lowerSearch) ||
+        String(f?.id ?? "").toLowerCase().includes(lowerSearch) ||
         (f?.question?.toLowerCase().includes(lowerSearch) ?? false) ||
-        // corrigido: toLocaleLowerCase com "o" minúsculo
         (f?.description?.toLowerCase().includes(lowerSearch) ?? false) ||
         (f?.nome_video?.toLowerCase().includes(lowerSearch) ?? false)
       );
@@ -67,12 +70,7 @@ const VerFaqTasy = () => {
 
   if (loadingFaqTasy) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="50vh"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
         <CircularProgress />
       </Box>
     );
@@ -80,25 +78,14 @@ const VerFaqTasy = () => {
 
   if (errorFaqTasy) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="50vh"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
         <Alert severity="error">{errorFaqTasy}</Alert>
       </Box>
     );
   }
 
   return (
-    <motion.div
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      transition={{ duration: 0.4 }}
-      variants={pageVariants}
-    >
+    <motion.div initial="initial" animate="animate" exit="exit" transition={{ duration: 0.4 }} variants={pageVariants}>
       <Box
         sx={{
           width: "100%",
@@ -110,10 +97,7 @@ const VerFaqTasy = () => {
           gap: 2,
         }}
       >
-        <Typography
-          variant="h5"
-          sx={{ textAlign: isMobile ? "center" : "left" }}
-        >
+        <Typography variant="h5" sx={{ textAlign: isMobile ? "center" : "left" }}>
           Pesquisar...
         </Typography>
 
@@ -129,21 +113,15 @@ const VerFaqTasy = () => {
           <Typography align="center">Nenhuma FAQ encontrada.</Typography>
         ) : (
           <Box>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ mb: 1 }}
-            >
-              <Typography variant="subtitle2">
-                Resultados: {filteredFaqTasy.length}
-              </Typography>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2">Resultados: {filteredFaqTasy.length}</Typography>
             </Stack>
 
             {filteredFaqTasy.map((f) => {
               const key = f?.id ?? `${f?.question}-${Math.random()}`;
               const summaryId = `faq-summary-${key}`;
               const detailsId = `faq-details-${key}`;
+              const videoSrc = f?.id ? `${viewBase}/${f.id}/video` : null;
 
               return (
                 <Accordion
@@ -169,9 +147,7 @@ const VerFaqTasy = () => {
                       },
                     }}
                   >
-                    <Typography
-                      sx={{ flex: 1, fontWeight: 600, wordBreak: "break-word" }}
-                    >
+                    <Typography sx={{ flex: 1, fontWeight: 600, wordBreak: "break-word" }}>
                       {f?.question ?? "Pergunta não informada"}
                     </Typography>
 
@@ -185,11 +161,7 @@ const VerFaqTasy = () => {
                         size="small"
                         aria-label="Editar FAQ"
                         onClick={() => handleOpenModal(f)}
-                        sx={{
-                          "& svg": {
-                            color: "#003366", 
-                          },
-                        }}
+                        sx={{ "& svg": { color: "#003366" } }}
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
@@ -204,13 +176,7 @@ const VerFaqTasy = () => {
                         <Typography variant="caption" color="text.secondary">
                           Descrição
                         </Typography>
-                        <Typography
-                          variant="body1"
-                          sx={{
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-word",
-                          }}
-                        >
+                        <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                           {f?.description ?? "-"}
                         </Typography>
                       </Box>
@@ -219,12 +185,24 @@ const VerFaqTasy = () => {
                         <Typography variant="caption" color="text.secondary">
                           Vídeo demonstrativo
                         </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ wordBreak: "break-word" }}
-                        >
-                          {f?.nome_video ?? "-"}
-                        </Typography>
+
+                        {f?.nome_video ? (
+                          <Box
+                            sx={{ mt: 1 }}
+                            onClick={(e) => e.stopPropagation()}
+                            onFocus={(e) => e.stopPropagation()}
+                          >
+                            <video
+                              controls
+                              style={{ width: "100%", maxHeight: 400, borderRadius: 8 }}
+                              src={videoSrc ?? undefined}
+                            />
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" sx={{ wordBreak: "break-word" }}>
+                            -
+                          </Typography>
+                        )}
                       </Box>
                     </Stack>
                   </AccordionDetails>
@@ -234,12 +212,7 @@ const VerFaqTasy = () => {
           </Box>
         )}
 
-        <AtualizarFaqTasy
-          open={openModal}
-          onClose={handleCloseModal}
-          faqSelecionada={faqSelecionada}
-          refreshLista={fetchFaq}
-        />
+        <AtualizarFaqTasy open={openModal} onClose={handleCloseModal} faqSelecionada={faqSelecionada} refreshLista={fetchFaq} />
       </Box>
     </motion.div>
   );

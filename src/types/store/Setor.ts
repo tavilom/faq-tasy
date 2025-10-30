@@ -1,5 +1,6 @@
 export type Setor = {
-  id: string | number;
+  id: number;
   nome: string;
-  codigo?: string | number;
+  nome_organograma: string | null; 
+  area_id: number;
 };

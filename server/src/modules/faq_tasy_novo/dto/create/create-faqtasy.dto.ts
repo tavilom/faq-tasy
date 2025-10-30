@@ -1,17 +1,35 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 
+const nullishToUndefined = () =>
+  Transform(({ value }) => (value === null || value === '' ? undefined : value));
 
 export class CreateFaqTasyDto {
+  @IsOptional()
   @IsString()
-  question: string;
+  @nullishToUndefined()
+  question?: string | null;
 
+  @IsOptional()
   @IsString()
-  description: string;
+  @nullishToUndefined()
+  description?: string | null;
 
+  // ⚠️ opcional no create — será definido após o upload
+  @IsOptional()
   @IsString()
-  nome_video: string;
+  @nullishToUndefined()
+  nome_video?: string | null;
 
+  // seu schema usa String?; deixe opcional
+  @IsOptional()
   @IsString()
-  id_ws: string;
+  @nullishToUndefined()
+  id_ws?: string | null;
 
+  // se você estiver enviando criado_em: string
+  @IsOptional()
+  @IsString()
+  @nullishToUndefined()
+  criado_em?: string | null;
 }

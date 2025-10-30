@@ -10,9 +10,9 @@ const useFaqTasy = () => {
   const [updatingFaqTasy, setUpdatingFaqTasy] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
-  //const apiUrl = import.meta.env.VITE_API_URL;
 
-  const apiUrl = "http://localhost:9923/api/faq_tasy/faq_tasy";
+  //const apiUrl = "http://192.168.74.179:9923/api/faq_tasy";
+  const apiUrl = "http://localhost:9923/api/faq_tasy";
 
   const fetchFaq = useCallback(async () => {
     try {

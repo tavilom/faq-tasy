@@ -1,4 +1,4 @@
-//@refresh reset
+"use client";
 import {
   createContext,
   useState,
@@ -6,117 +6,158 @@ import {
   ReactNode,
   Dispatch,
   SetStateAction,
-  JSX
+  useRef,
+  JSX,
 } from "react";
 import useAcessos from "@/shared/hooks/useAcessos";
 import { CircularProgress, Box } from "@mui/material";
 
-// --- 1) Definições de tipo -------------------------------------------------
-
+// --- Tipos -----------------------------------------------------------------
 export interface Perfil {
   usuario?: string;
   permissoes?: string;
+  email?: string;
+  id?: string;
+  nomecompleto?: string; // guardamos em lower-case
   [key: string]: string | undefined;
 }
-
 export interface AuthContextType {
   perfil: Perfil;
   setPerfil: Dispatch<SetStateAction<Perfil>>;
 }
-
 interface AuthContextProviderProps {
   children: ReactNode;
 }
 
-// --- 2) Criação do Contexto -----------------------------------------------
-
+// --- Contexto --------------------------------------------------------------
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-// --- 3) Provider -----------------------------------------------------------
+// --- Constantes ------------------------------------------------------------
+const STORAGE_KEY = "faq_tasy_novo";
+const REDIRECT_FLAG = "faq_tasy_novo_redirected";
 
-export function AuthContextProvider({
-  children
-}: AuthContextProviderProps): JSX.Element {
-  // Função para extrair parâmetros da URL
-  function getURLParameters(): Perfil {
-    const params = new URLSearchParams(window.location.search);
-    const result: Perfil = {};
-    params.forEach((value, key) => {
-      result[key] = value;
-    });
-    return result;
+// Normaliza objeto: lower-case keys, trim e só strings não vazias
+function normalizePerfil(p: Record<string, any> | null | undefined): Perfil {
+  if (!p) return {};
+  const out: Perfil = {};
+  Object.keys(p).forEach((k) => {
+    const key = k.toLowerCase();
+    const val = p[k];
+    if (typeof val === "string") {
+      const v = val.trim();
+      if (v) out[key] = v;
+    }
+  });
+  return out;
+}
+
+// Lê URL + localStorage sincronamente (na 1ª render do cliente)
+function getInitialPerfil(): Perfil {
+  if (typeof window === "undefined") return {};
+  // URL (espera: nomeCompleto, email, id, usuario)
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl: Perfil = {};
+  params.forEach((rawValue, rawKey) => {
+    const key = rawKey.toLowerCase();
+    const value = (rawValue ?? "").trim();
+    if (!value) return;
+    fromUrl[key] = value;
+  });
+
+  // localStorage (fallback)
+  let fromStorage: Perfil = {};
+  try {
+    const storedJSON = window.localStorage.getItem(STORAGE_KEY);
+    fromStorage = normalizePerfil(storedJSON ? JSON.parse(storedJSON) : {});
+  } catch {
+    fromStorage = {};
   }
 
-  const urlPerfil = getURLParameters();
+  return Object.keys(fromUrl).length > 0 ? fromUrl : fromStorage;
+}
 
-  // Chave única para armazenar no localStorage
-  const STORAGE_KEY = "termometro_humor";
-  const storedJSON = localStorage.getItem(STORAGE_KEY);
-  const storedPerfil: Perfil = storedJSON ? JSON.parse(storedJSON) : {};
+export function AuthContextProvider({ children }: AuthContextProviderProps): JSX.Element {
+  // <<< Inicializa já com URL/localStorage, evitando corrida de efeitos >>>
+  const [perfil, setPerfil] = useState<Perfil>(() => getInitialPerfil());
+  const [ready, setReady] = useState<boolean>(typeof window !== "undefined"); // já pronto no cliente
+  const hasRedirectedRef = useRef(false);
 
-  // Perfil inicial: prioriza URL, senão localStorage
-  const [perfil, setPerfil] = useState<Perfil>(
-    Object.keys(urlPerfil).length > 0 ? urlPerfil : storedPerfil
-  );
-
-  // Estado de "pronto" indica que já limpamos a URL
-  const [ready, setReady] = useState(false);
-
-  // Hook que traz a lista de acessos (usuários + permissões)
   const { acesso, loadingAcesso } = useAcessos();
 
-  // --- 3.1) Limpar query string da URL uma única vez
+  // Limpa a query string apenas uma vez se veio algo pela URL
   useEffect(() => {
-    if (Object.keys(urlPerfil).length > 0) {
+    if (typeof window === "undefined") return;
+    const hadQuery = window.location.search.length > 1;
+    if (hadQuery) {
       const u = new URL(window.location.href);
       u.search = "";
       window.history.replaceState({}, document.title, u.toString());
     }
-    setReady(true);
-  }, []); // roda só no mount
+  }, []);
 
-  // --- 3.2) Persistir perfil ou redirecionar
+  // Persistir quando houver algum identificador
   useEffect(() => {
-    if (!ready) return; // só após limpar a URL
-
-    if (perfil.usuario) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(perfil));
-    } else {
-      // sem usuário válido, voltar ao WS de autenticação
-      window.location.href = "https://ws2.unimedpelotas.com.br/ws/";
-    }
-  }, [perfil, ready]);
-
-  // --- 3.3) Sincronizar permissões vindas do serviço de acessos
-  useEffect(() => {
-    if (!loadingAcesso && perfil.usuario) {
-      const match = acesso?.find((a) => a.usuario === perfil.usuario);
-      if (match && match.permissoes !== perfil.permissoes) {
-        setPerfil((prev) => ({
-          ...prev,
-          permissoes: match.permissoes
-        }));
+    if (typeof window === "undefined") return;
+    const hasIdentity = Boolean((perfil.usuario || perfil.email || perfil.id || "").trim());
+    if (hasIdentity) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(perfil));
+      } catch {
+        /* ignore */
       }
     }
-  }, [acesso, loadingAcesso, perfil.usuario]);
+    // como estamos no cliente, podemos considerar "ready" true
+    setReady(true);
+  }, [perfil]);
 
-  // --- 4) Mostrar loader até tudo ficar pronto -----------------------------
+  // Redirecionar só se: pronto, sem identificador, e sem loop na sessão
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!ready) return;
+    if (hasRedirectedRef.current) return;
+
+    const hasIdentity = Boolean((perfil.usuario || perfil.email || perfil.id || "").trim());
+    const alreadyRedirected = window.sessionStorage.getItem(REDIRECT_FLAG) === "1";
+
+    if (!hasIdentity && !alreadyRedirected) {
+      hasRedirectedRef.current = true;
+      window.sessionStorage.setItem(REDIRECT_FLAG, "1");
+      window.location.replace("https://ws2.unimedpelotas.com.br/ws/");
+    }
+  }, [ready, perfil.usuario, perfil.email, perfil.id]);
+
+  // Sincronizar com serviço de acessos (preenche usuario/permissoes se vierem)
+  useEffect(() => {
+    if (loadingAcesso) return;
+
+    const maybeUser =
+      (Array.isArray(acesso) ? acesso?.[0]?.usuario : acesso?.usuario) ?? "";
+
+    if (!perfil.usuario && typeof maybeUser === "string" && maybeUser.trim() !== "") {
+      setPerfil((prev) => ({ ...prev, usuario: maybeUser.trim() }));
+    }
+
+    if (perfil.usuario) {
+      const lista = Array.isArray(acesso) ? acesso : acesso ? [acesso] : [];
+      const match = lista.find(
+        (a: any) =>
+          String(a?.usuario ?? "").toLowerCase() === String(perfil.usuario).toLowerCase()
+      );
+      if (match && match.permissoes !== perfil.permissoes) {
+        setPerfil((prev) => ({ ...prev, permissoes: match.permissoes }));
+      }
+    }
+  }, [acesso, loadingAcesso, perfil.usuario, perfil.permissoes]);
+
+  // Loader
   if (!ready || loadingAcesso) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh"
-        }}
-      >
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
         <CircularProgress />
       </Box>
     );
   }
 
-  // --- 5) Renderizar provider com o perfil carregado -----------------------
   return (
     <AuthContext.Provider value={{ perfil, setPerfil }}>
       {children}

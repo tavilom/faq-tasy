@@ -1,4 +1,4 @@
-import { Box, Typography, Divider, Button } from "@mui/material";
+import { Box, Typography, Divider, Button, Stack } from "@mui/material";
 import { motion } from "framer-motion";
 import { pageVariants } from "@/shared/styles/animationStyle";
 import PaperBackground from "@/shared/components/PaperBackground";
@@ -22,30 +22,26 @@ const Inicial = () => {
     >
       <Box p={2}>
         <PaperBackground>
-          <Typography variant="h1" sx={{ m: 3, fontSize: 28 }}>
-            FAQ Tasy
-          </Typography>
+          <Stack
+            className="no-print"
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ m: 3, mt: 1 }}
+          >
+            <Typography variant="h1" sx={{ m: 1, fontSize: 28 }}>
+              FAQ Tasy
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={handleGoAddFaq}
+              color="primary"
+            >
+              Adicionar FAQ
+            </Button>
+          </Stack>
 
           <Divider sx={{ my: 2 }} />
-
-          <Button
-            variant="contained"
-            onClick={handleGoAddFaq}
-            sx={{
-              mt: 2,
-              backgroundColor: "transparent",
-              backgroundImage: "linear-gradient(to right, #000000, #003366)",
-              color: "#fff",
-              backgroundSize: "200%",
-              transition: "0.4s",
-              "&:hover": {
-                backgroundPosition: "right center",
-                backgroundImage: "linear-gradient(to right, #000000, #003366)",
-              },
-            }}
-          >
-            Adicionar FAQ
-          </Button>
 
           <VerFaqTasy />
         </PaperBackground>
