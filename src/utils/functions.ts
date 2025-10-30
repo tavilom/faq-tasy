@@ -11,7 +11,7 @@ export const logoPinheiroPNG: string = pinheiropng;
 //======= função para pegar dados do perfil
 import type { Acesso } from "@/types/store/Acesso";
 
-/** Perfil mínimo esperado vindo do AuthContext (ajuste campos conforme o seu projeto) */
+/** Perfil mínimo esperado vindo do AuthContext */
 export type PerfilMin = {
   nomeCompleto?: string;
   setor?: string;
