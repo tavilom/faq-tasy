@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useContext } from "react";
 import {
   Box,
   CircularProgress,
@@ -13,13 +13,27 @@ import {
   AccordionDetails,
   Divider,
   Stack,
+  Tooltip, // (opcional) para dica quando permitido
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
 import useFaqTasy from "@/shared/hooks/useFaqTasy";
-import AtualizarFaqTasy from "./AtualizarFaqTase";
+import AtualizarFaqTasy from "./AtualizarFaqTasy";
 import { motion } from "framer-motion";
 import { pageVariants } from "@/shared/styles/animationStyle";
+
+// >>> ADIÇÃO: vamos ler o perfil logado
+import { AuthContext } from "@/stores/AuthContext";
+
+function normalizarSetor(valor?: string): string {
+  // remove acento, baixa caixa, troca espaço/traço por _
+  return String(valor ?? "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_")
+    .trim();
+}
 
 const VerFaqTasy = () => {
   const {
@@ -27,8 +41,11 @@ const VerFaqTasy = () => {
     loadingFaqTasy,
     errorFaqTasy,
     refreshFaqTasy: fetchFaq,
-    apiUrl, 
+    apiUrl,
   } = useFaqTasy();
+
+  // >>> ADIÇÃO: acessar o perfil atual
+  const auth = useContext(AuthContext);
 
   const listaFaqTasy = Array.isArray(faqtasy) ? faqtasy : [];
 
@@ -39,7 +56,30 @@ const VerFaqTasy = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
+  // >>> ADIÇÃO: verificar se o setor do perfil permite edição
+  const podeEditarFAQ = useMemo(() => {
+    const setorNorm = normalizarSetor(auth?.perfil?.setor);
+    // aceita equivalentes comuns
+    const candidatosPermitidos = new Set([
+      "tecnologia_da_informacao",
+      "tecnologia_da_informacao_ti",
+      "ti",
+      "tecnologia_informacao",
+    ]);
+    return setorNorm.length > 0 && (candidatosPermitidos.has(setorNorm) || setorNorm.includes("tecnologia_da_informacao"));
+  }, [auth?.perfil?.setor]);
+
+  // (opcional) logar no console para auditoria
+  useEffect(() => {
+    // mostra qual setor foi detectado e a permissão calculada
+    // útil para confirmar o comportamento
+    // eslint-disable-next-line no-console
+    console.info("[VerFaqTasy] setor do perfil:", auth?.perfil?.setor, "=> normalizado:", normalizarSetor(auth?.perfil?.setor), " | podeEditarFAQ:", podeEditarFAQ);
+  }, [auth?.perfil?.setor, podeEditarFAQ]);
+
   const handleOpenModal = (f: any) => {
+    // >>> ADIÇÃO: guard de segurança
+    if (!podeEditarFAQ) return;
     setFaqSelecionada(f);
     setOpenModal(true);
   };
@@ -151,21 +191,26 @@ const VerFaqTasy = () => {
                       {f?.question ?? "Pergunta não informada"}
                     </Typography>
 
-                    <Box
-                      onClick={(e) => e.stopPropagation()}
-                      onFocus={(e) => e.stopPropagation()}
-                      sx={{ display: "flex", alignItems: "center" }}
-                    >
-                      <IconButton
-                        component="div"
-                        size="small"
-                        aria-label="Editar FAQ"
-                        onClick={() => handleOpenModal(f)}
-                        sx={{ "& svg": { color: "#003366" } }}
+                    {/* >>> ALTERAÇÃO: só renderiza o botão se tiver permissão */}
+                    {podeEditarFAQ && (
+                      <Box
+                        onClick={(e) => e.stopPropagation()}
+                        onFocus={(e) => e.stopPropagation()}
+                        sx={{ display: "flex", alignItems: "center" }}
                       >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
+                        <Tooltip title="Editar FAQ">
+                          <IconButton
+                            component="div"
+                            size="small"
+                            aria-label="Editar FAQ"
+                            onClick={() => handleOpenModal(f)}
+                            sx={{ "& svg": { color: "#003366" } }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    )}
                   </AccordionSummary>
 
                   <Divider sx={{ my: 2 }} />
@@ -212,7 +257,12 @@ const VerFaqTasy = () => {
           </Box>
         )}
 
-        <AtualizarFaqTasy open={openModal} onClose={handleCloseModal} faqSelecionada={faqSelecionada} refreshLista={fetchFaq} />
+        <AtualizarFaqTasy
+          open={openModal}
+          onClose={handleCloseModal}
+          faqSelecionada={faqSelecionada}
+          refreshLista={fetchFaq}
+        />
       </Box>
     </motion.div>
   );

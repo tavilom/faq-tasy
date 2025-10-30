@@ -6,7 +6,9 @@ const useSetores = () => {
     const [loadingSetor, setLoadingSetor] = useState(true);
     const [errorSetor, setErrorSetor] = useState("");
 
-    const apiUrl = 'http://192.168.74.179:9986/api/organograma/setores';
+    //const apiUrl = 'http://192.168.74.179:9986/api/organograma/setores';
+    const apiUrl = 'http://192.168.74.179:9923/api/organograma/setores';
+    
 
     useEffect(() => {
         const fetchSetor = async () => {
