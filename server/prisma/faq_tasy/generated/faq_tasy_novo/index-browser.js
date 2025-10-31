@@ -20,12 +20,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.9.0
- * Query Engine version: 81e4af48011447c3cc503a190e86995b66d2a28e
+ * Prisma Client JS version: 6.18.0
+ * Query Engine version: 34b5a692b7bd79939a9a2c3ef97d816e749cda2f
  */
 Prisma.prismaVersion = {
-  client: "6.9.0",
-  engine: "81e4af48011447c3cc503a190e86995b66d2a28e"
+  client: "6.18.0",
+  engine: "34b5a692b7bd79939a9a2c3ef97d816e749cda2f"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -129,6 +129,14 @@ exports.Prisma.Faq_tasyScalarFieldEnum = {
   id_ws: 'id_ws'
 };
 
+exports.Prisma.LogsScalarFieldEnum = {
+  id: 'id',
+  ip: 'ip',
+  usuario: 'usuario',
+  acao: 'acao',
+  data: 'data'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -146,9 +154,16 @@ exports.Prisma.faq_tasyOrderByRelevanceFieldEnum = {
   id_ws: 'id_ws'
 };
 
+exports.Prisma.logsOrderByRelevanceFieldEnum = {
+  ip: 'ip',
+  usuario: 'usuario',
+  acao: 'acao'
+};
+
 
 exports.Prisma.ModelName = {
-  faq_tasy: 'faq_tasy'
+  faq_tasy: 'faq_tasy',
+  logs: 'logs'
 };
 
 /**

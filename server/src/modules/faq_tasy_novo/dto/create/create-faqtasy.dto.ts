@@ -1,8 +1,10 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsISO8601, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 const nullishToUndefined = () =>
-  Transform(({ value }) => (value === null || value === '' ? undefined : value));
+  Transform(({ value }) =>
+    value === null || value === '' ? undefined : value,
+  );
 
 export class CreateFaqTasyDto {
   @IsOptional()
@@ -28,8 +30,7 @@ export class CreateFaqTasyDto {
   id_ws?: string | null;
 
   // se você estiver enviando criado_em: string
-  @IsOptional()
-  @IsString()
+  @IsISO8601()
   @nullishToUndefined()
   criado_em?: string | null;
 }

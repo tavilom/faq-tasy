@@ -1,13 +1,13 @@
-import { useContext, useMemo } from "react"; // << ADIÇÃO
+import { useContext, useMemo } from "react"; 
 import { Box, Typography, Divider, Button, Stack } from "@mui/material";
 import { motion } from "framer-motion";
 import { pageVariants } from "@/shared/styles/animationStyle";
 import PaperBackground from "@/shared/components/PaperBackground";
 import { useNavigate } from "react-router-dom";
 import VerFaqTasy from "../components/VerFaq";
-import { AuthContext } from "@/stores/AuthContext"; // << ADIÇÃO
+import { AuthContext } from "@/stores/AuthContext"; 
 
-// << ADIÇÃO: normalizador e checagem de setor TI
+//  normalizador e checagem de setor TI
 function normalizarSetor(valor?: string): string {
   return String(valor ?? "")
     .normalize("NFD")
@@ -29,15 +29,15 @@ function isSetorTI(setor?: string): boolean {
 
 const Inicial = () => {
   const navigate = useNavigate();
-  const auth = useContext(AuthContext); // << ADIÇÃO
+  const auth = useContext(AuthContext); 
 
   const podeAdicionar = useMemo(
     () => isSetorTI(auth?.perfil?.setor),
     [auth?.perfil?.setor]
-  ); // << ADIÇÃO
+  ); 
 
   function handleGoAddFaq() {
-    if (!podeAdicionar) return; // << ADIÇÃO: guard extra de segurança
+    if (!podeAdicionar) return; 
     navigate("/faq/adicionar");
   }
 

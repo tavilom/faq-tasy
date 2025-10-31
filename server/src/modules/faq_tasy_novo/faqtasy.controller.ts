@@ -11,15 +11,17 @@ import {
   UploadedFile,
   Res,
   Delete,
+  Ip,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { FaqTasyService } from './faqtasy.service';
-import { faq_tasy } from 'prisma/faq_tasy/generated/faq_tasy_novo';
+import { faq_tasy, logs } from 'prisma/faq_tasy/generated/faq_tasy_novo';
 import { CreateFaqTasyDto } from './dto/create/create-faqtasy.dto';
 import { PatchFaqTasyDto } from './dto/patch/patch-faqtasy.dto';
 import { videoMulterOptions } from '../../config/upload.config';
+import { CreateLogDto } from './dto/create/create-log.dto';
 
 @Controller('faq_tasy')
 export class FaqTasyController {
@@ -30,6 +32,10 @@ export class FaqTasyController {
   @Get()
   async findAllFaqTasy(): Promise<faq_tasy[]> {
     return this.faqtasyService.findAllFaqTasy();
+  }
+  @Get('logs')
+  async findAllLogs(): Promise<logs[]> {
+    return this.faqtasyService.findAllLogs();
   }
 
   // ==== STREAM VÍDEO ====
@@ -51,6 +57,11 @@ export class FaqTasyController {
   @Post()
   createFaqTasy(@Body() dto: CreateFaqTasyDto) {
     return this.faqtasyService.createFaqTasy(dto);
+  }
+
+  @Post('logs')
+  CreateLog(@Body() dto: CreateLogDto, @Ip() ip: string): Promise<logs> {
+    return this.faqtasyService.createLog({ ...dto, ip });
   }
 
   // ==== PATCH (campos + vídeo opcional) ====

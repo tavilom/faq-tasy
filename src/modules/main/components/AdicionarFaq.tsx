@@ -1,4 +1,10 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   Box,
   Stack,
@@ -16,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 type FaqCreatePayload = {
   question: string | null;
   description: string | null;
-  criado_em: string | null;
+  criado_em: string | null; // será enviado pelo front (UTC)
   id_ws: string | null;
 };
 
@@ -27,17 +33,14 @@ const initialForm: FormState = {
   description: "",
 };
 
-function formatLocalNaive(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const y = d.getFullYear();
-  const m = pad(d.getMonth() + 1);
-  const day = pad(d.getDate());
-  const hh = pad(d.getHours());
-  const mm = pad(d.getMinutes());
-  const ss = pad(d.getSeconds());
-  return `${y}-${m}-${day}T${hh}:${mm}:${ss}`;
-}
+// --------- helpers dentro do componente ----------
+
+const nowBrasiliaNaiveIso = () => {
+  const now = new Date();
+  const offsetMinutes = 180; // 3h
+  const adjusted = new Date(now.getTime() - offsetMinutes * 60 * 1000);
+  return adjusted.toISOString();
+};
 
 const MAX_VIDEO_BYTES = 15 * 1024 * 1024; // 15MB
 const ACCEPT_TYPES = ["video/mp4", "video/webm", "video/ogg"];
@@ -57,6 +60,8 @@ const AdicionarFaq: React.FC = () => {
 
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const [triedSubmit, setTriedSubmit] = useState(false);
 
   const ws_id = (auth?.perfil?.ws_id ?? null) as string | null;
 
@@ -90,28 +95,42 @@ const AdicionarFaq: React.FC = () => {
     return {
       question: form.question || null,
       description: form.description || null,
-      criado_em: formatLocalNaive(),
+      criado_em: nowBrasiliaNaiveIso(), // envia SEMPRE em UTC
       id_ws: ws_id,
-      // não enviar nome_video aqui
     };
   }, [ws_id, form]);
 
-  // endpoint de CREATE sem querystring (ex.: /api/faq_tasy/faq_tasy)
   const createEndpoint = useMemo(() => {
     const clean = (apiUrl ?? "").split("?")[0].replace(/\/+$/, "");
     return clean;
   }, [apiUrl]);
 
+  // --------- validações de formulário ----------
+  const isTextFilled =
+    form.question.trim().length > 0 && form.description.trim().length > 0;
+
+  // vídeo obrigatório e válido
+  const isVideoOk = !!file && !fileError;
+
+  const canSubmit = isTextFilled && isVideoOk && !submitting && !uploading;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
+    setTriedSubmit(true);
     setSubmitError(null);
     setCreated(null);
     setUploadError(null);
 
+    // bloqueia se faltar algo
+    if (!canSubmit) {
+      setSubmitError("Preencha todos os campos obrigatórios antes de salvar.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      // 1) Cria o FAQ (JSON)
       const payload = toPayload();
+
       const res = await fetch(createEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -125,13 +144,11 @@ const AdicionarFaq: React.FC = () => {
       const novo: FaqTasy = await res.json();
       setCreated(novo);
 
-      // 2) Se tiver vídeo selecionado, faz upload (FormData)
       if (file) {
         setUploading(true);
-        const uploadUrl = `${createEndpoint}/${novo.id}/video`; // /faq_tasy/faq_tasy/:id/video
+        const uploadUrl = `${createEndpoint}/${(novo as any).id}/video`;
         const fd = new FormData();
-        fd.append("file", file);
-
+        fd.append("video", file);
 
         const up = await fetch(uploadUrl, {
           method: "POST",
@@ -140,13 +157,14 @@ const AdicionarFaq: React.FC = () => {
         if (!up.ok) {
           const text = await up.text().catch(() => "");
           console.error("[FAQ UPLOAD] body:", text);
-          throw new Error(`Erro no upload do vídeo: ${up.status} ${up.statusText}`);
+          throw new Error(
+            `Erro no upload do vídeo: ${up.status} ${up.statusText}`
+          );
         }
-        const uploaded = await up.json(); // { id, nome_video, url }
+        const uploaded = await up.json();
         console.log("Uploaded: ", uploaded);
       }
 
-      // 3) Limpa form e atualiza lista
       setForm(initialForm);
       setFile(null);
       refreshFaqTasy();
@@ -170,9 +188,18 @@ const AdicionarFaq: React.FC = () => {
 
   return (
     <Box component="section" sx={{ p: 2 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 2 }}
+      >
         <Typography variant="h6">Adicionar FAQ</Typography>
-        <Button variant="outlined" onClick={() => navigate(-1)} color="primary">
+        <Button
+          variant="outlined"
+          onClick={() => navigate("/", { replace: true })}
+          color="primary"
+        >
           Voltar
         </Button>
       </Stack>
@@ -190,6 +217,7 @@ const AdicionarFaq: React.FC = () => {
       {created && (
         <Alert severity="success" sx={{ mb: 2 }}>
           Cadastrado com Sucesso!
+          {/* Não mostramos data na UI */}
         </Alert>
       )}
 
@@ -200,6 +228,13 @@ const AdicionarFaq: React.FC = () => {
             value={form.question}
             onChange={handleChange("question")}
             fullWidth
+            required
+            error={triedSubmit && form.question.trim().length === 0}
+            helperText={
+              triedSubmit && form.question.trim().length === 0
+                ? "Informe a pergunta."
+                : undefined
+            }
           />
           <TextField
             label="Descrição"
@@ -208,24 +243,40 @@ const AdicionarFaq: React.FC = () => {
             fullWidth
             multiline
             minRows={3}
+            required
+            error={triedSubmit && form.description.trim().length === 0}
+            helperText={
+              triedSubmit && form.description.trim().length === 0
+                ? "Informe a descrição."
+                : undefined
+            }
           />
 
           <Stack spacing={1}>
             <Typography variant="body2" color="text.secondary">
-              Vídeo
+              Vídeo (obrigatório)
             </Typography>
             <Button variant="outlined" component="label">
               {file ? "Trocar vídeo" : "Selecionar vídeo"}
               <input
                 hidden
                 type="file"
+                name="video"
                 accept="video/mp4,video/webm,video/ogg"
                 onChange={handleFileChange}
               />
             </Button>
+
+            {triedSubmit && !file && !fileError && (
+              <Alert severity="warning" sx={{ mt: 1 }}>
+                Selecione um vídeo.
+              </Alert>
+            )}
+
             {file && (
               <Typography variant="caption">
-                Selecionado: <strong>{file.name}</strong> ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                Selecionado: <strong>{file.name}</strong> (
+                {(file.size / 1024 / 1024).toFixed(2)} MB)
               </Typography>
             )}
             {fileError && (
@@ -239,23 +290,18 @@ const AdicionarFaq: React.FC = () => {
             <Button
               type="submit"
               variant="contained"
-              disabled={submitting || uploading || !!fileError}
+              disabled={!!fileError ||!canSubmit}
               startIcon={
-                submitting || uploading ? <CircularProgress size={18} /> : undefined
+                submitting || uploading ? (
+                  <CircularProgress size={18} />
+                ) : undefined
               }
-              sx={{
-                backgroundColor: "transparent",
-                backgroundImage: "linear-gradient(to right, #000000, #003366)",
-                color: "#fff",
-                backgroundSize: "200%",
-                transition: "0.4s",
-                "&:hover": {
-                  backgroundPosition: "right center",
-                  backgroundImage: "linear-gradient(to right, #000000, #003366)",
-                },
-              }}
             >
-              {submitting ? "Salvando..." : uploading ? "Enviando vídeo..." : "Salvar"}
+              {submitting
+                ? "Salvando..."
+                : uploading
+                ? "Enviando vídeo..."
+                : "Salvar"}
             </Button>
           </Box>
         </Stack>

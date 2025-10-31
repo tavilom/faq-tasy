@@ -53,23 +53,13 @@ export function resolverUsuarioDoPerfil(perfil?: PerfilMin): string | undefined 
   return candidato != null ? String(candidato) : undefined;
 }
 
-/**
- * Lê TODOS os dados de acesso do perfil:
- * - Determina o identificador do usuário a partir do `perfil`
- * - Consulta a API `${apiUrl}/acesso/acessos/:usuario`
- * - Retorna o resumo do perfil + os acessos
- *
- * @param perfil  Objeto de perfil (do AuthContext)
- * @param apiUrl  Base URL da API (por padrão usa import.meta.env.VITE_API_URL)
- * @param opts    Opções de requisição (token Bearer, credentials p/ cookie/sessão, AbortSignal)
- */
 export async function getAcessoDoPerfil(
   perfil?: PerfilMin,
   apiUrl: string | undefined = import.meta.env.VITE_API_URL as string | undefined,
   opts: {
-    token?: string;                       // Authorization: Bearer <token>
-    credentials?: RequestCredentials;     // "include" se usar cookie de sessão
-    signal?: AbortSignal;                 // para cancelar a requisição
+    token?: string;                       
+    credentials?: RequestCredentials;     
+    signal?: AbortSignal;                 
   } = {}
 ): Promise<ResultadoAcessoDoPerfil> {
   const usuario = resolverUsuarioDoPerfil(perfil);
@@ -149,5 +139,5 @@ export async function getAcessoDoPerfil(
     };
   }
 }
+//=================
 
-// ==============

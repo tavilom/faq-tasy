@@ -1,39 +1,79 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaServiceFaqTasyNovo } from 'src/prisma/prisma.service';
-import { faq_tasy } from 'prisma/faq_tasy/generated/faq_tasy_novo';
+import { faq_tasy, logs } from 'prisma/faq_tasy/generated/faq_tasy_novo';
 
 // DTOs
 import { CreateFaqTasyDto } from './dto/create/create-faqtasy.dto';
+import { CreateLogDto } from './dto/create/create-log.dto';
 import { PatchFaqTasyDto } from './dto/patch/patch-faqtasy.dto';
 
 // FS/Path
 import { createReadStream, statSync, existsSync, unlinkSync } from 'fs';
 import { join, basename } from 'path';
 
+
 @Injectable()
 export class FaqTasyService {
   constructor(private prismaServiceControle: PrismaServiceFaqTasyNovo) {}
+
+  private readonly logger = new Logger(FaqTasyService.name);
 
   // ===== GET =====
   async findAllFaqTasy(): Promise<faq_tasy[]> {
     return this.prismaServiceControle.faq_tasy.findMany();
   }
 
+  async findAllLogs(): Promise<logs[]> {
+    return this.prismaServiceControle.logs.findMany();
+  }
+
   // ===== POST =====
   async createFaqTasy(dto: CreateFaqTasyDto): Promise<faq_tasy> {
     return this.prismaServiceControle.faq_tasy.create({
       data: {
-        question: dto.question,       // corrigido
+        question: dto.question, // corrigido
         description: dto.description,
         nome_video: dto.nome_video,
-        id_ws: dto.id_ws as any,      // ajuste se id_ws for number no schema
+        criado_em: dto.criado_em ? new Date(dto.criado_em) : undefined,
+        id_ws: dto.id_ws as any, // ajuste se id_ws for number no schema
       },
     });
   }
 
+  async createLog(dto: CreateLogDto): Promise<logs> {
+    const usuario = dto.usuario?.trim();
+    const acao = dto.acao?.trim();
+    const ip = dto.ip?.trim();
+
+    if (!usuario || !acao) {
+      throw new BadRequestException('Usuário e ação são obrigatórios.');
+    }
+    if (!ip) {
+      throw new BadRequestException('IP do cleinte não identificado.')
+    }
+
+    try {
+      return await this.prismaServiceControle.logs.create({
+        data: { usuario, acao, ip},
+      });
+    } catch (e: any) {
+      throw new BadRequestException('Não foi possível restrar o log.');
+    }
+  }
+
+
+
   // ===== PATCH =====
   /** Troca o vídeo do FAQ e remove o antigo do disco (se existir) */
-  private async replaceFaqVideo(id: number, newFile: Express.Multer.File): Promise<string> {
+  private async replaceFaqVideo(
+    id: number,
+    newFile: Express.Multer.File,
+  ): Promise<string> {
     const current = await this.prismaServiceControle.faq_tasy.findUnique({
       where: { id },
       select: { nome_video: true },
@@ -52,7 +92,11 @@ export class FaqTasyService {
     if (antigo && antigo !== nome_video_novo) {
       const oldPath = join(process.cwd(), 'uploads', 'videos', antigo);
       if (existsSync(oldPath)) {
-        try { unlinkSync(oldPath); } catch { /* ignora erro de deleção */ }
+        try {
+          unlinkSync(oldPath);
+        } catch {
+          /* ignora erro de deleção */
+        }
       }
     }
 
@@ -60,7 +104,11 @@ export class FaqTasyService {
   }
 
   /** PATCH que aceita arquivo opcional de vídeo além do JSON */
-  async patchFaqTasy(id: number, payload: PatchFaqTasyDto, file?: Express.Multer.File): Promise<faq_tasy> {
+  async patchFaqTasy(
+    id: number,
+    payload: PatchFaqTasyDto,
+    file?: Express.Multer.File,
+  ): Promise<faq_tasy> {
     if (!Number.isInteger(id) || id <= 0) {
       throw new BadRequestException('id inválido');
     }
@@ -68,11 +116,17 @@ export class FaqTasyService {
       throw new BadRequestException('corpo vazio');
     }
 
-    const allowed: (keyof PatchFaqTasyDto)[] = ['question', 'description', 'nome_video', 'id_ws'];
+    const allowed: (keyof PatchFaqTasyDto)[] = [
+      'question',
+      'description',
+      'nome_video',
+      'id_ws',
+    ];
     const data: Record<string, any> = {};
     for (const k of allowed) {
       const v = payload[k];
-      if (v !== undefined) data[k as string] = typeof v === 'string' ? v.trim() : v;
+      if (v !== undefined)
+        data[k as string] = typeof v === 'string' ? v.trim() : v;
     }
 
     // se veio arquivo, prioriza o filename gerado pelo Multer
@@ -91,16 +145,23 @@ export class FaqTasyService {
         data,
       });
     } catch (e: any) {
-      if (e?.code === 'P2025') throw new NotFoundException('FAQ não encontrado');
+      if (e?.code === 'P2025')
+        throw new NotFoundException('FAQ não encontrado');
       throw e;
     }
   }
 
   /** Rota dedicada para trocar apenas o vídeo (se preferir usar) */
-  async attachVideoToFaq(id: number, file: Express.Multer.File): Promise<faq_tasy> {
-    if (!Number.isInteger(id) || id <= 0) throw new BadRequestException('id inválido');
+  async attachVideoToFaq(
+    id: number,
+    file: Express.Multer.File,
+  ): Promise<faq_tasy> {
+    if (!Number.isInteger(id) || id <= 0)
+      throw new BadRequestException('id inválido');
     await this.replaceFaqVideo(id, file);
-    return this.prismaServiceControle.faq_tasy.findUnique({ where: { id } }) as any;
+    return this.prismaServiceControle.faq_tasy.findUnique({
+      where: { id },
+    }) as any;
   }
 
   // ====== VIDEO: streaming com suporte a Range ======
@@ -113,11 +174,13 @@ export class FaqTasyService {
     if (!faq.nome_video) throw new NotFoundException('FAQ sem vídeo');
 
     const filePath = join(process.cwd(), 'uploads', 'videos', faq.nome_video);
-    const mime =
-      faq.nome_video.endsWith('.mp4') ? 'video/mp4' :
-      faq.nome_video.endsWith('.webm') ? 'video/webm' :
-      faq.nome_video.endsWith('.ogg') ? 'video/ogg' :
-      'application/octet-stream';
+    const mime = faq.nome_video.endsWith('.mp4')
+      ? 'video/mp4'
+      : faq.nome_video.endsWith('.webm')
+        ? 'video/webm'
+        : faq.nome_video.endsWith('.ogg')
+          ? 'video/ogg'
+          : 'application/octet-stream';
 
     const stats = statSync(filePath);
     const fileSize = stats.size;
@@ -157,7 +220,9 @@ export class FaqTasyService {
       throw new BadRequestException('id inválido');
     }
     try {
-      return await this.prismaServiceControle.faq_tasy.delete({ where: { id } });
+      return await this.prismaServiceControle.faq_tasy.delete({
+        where: { id },
+      });
     } catch (e: any) {
       if (e?.code === 'P2025') {
         throw new NotFoundException('FAQ não encontrado');

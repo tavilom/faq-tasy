@@ -6,12 +6,15 @@ const useFaqTasy = () => {
   const [loadingFaqTasy, setLoadingFaqTasy] = useState(true);
   const [errorFaqTasy, setErrorFaqTasy] = useState("");
 
-  //estado específicos para update
+  // estados de update
   const [updatingFaqTasy, setUpdatingFaqTasy] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
+  // estados de delete
+  const [deletingFaqId, setDeletingFaqId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  //const apiUrl = "http://192.168.74.179:9923/api/faq_tasy";
+  // const apiUrl = "http://192.168.74.179:9923/api/faq_tasy";
   const apiUrl = "http://localhost:9923/api/faq_tasy";
 
   const fetchFaq = useCallback(async () => {
@@ -36,7 +39,7 @@ const useFaqTasy = () => {
     }
   }, [apiUrl]);
 
-  // PATCH parcial (atualiza a faq e reflete no estado local)
+  // PATCH parcial
   const updateFaqTasyPartial = useCallback(
     async (id: number, patch: Partial<FaqTasy>): Promise<FaqTasy | null> => {
       setUpdateError(null);
@@ -48,9 +51,7 @@ const useFaqTasy = () => {
           body: JSON.stringify(patch),
         });
         if (!res.ok) {
-          throw new Error(
-            `Erro ao atualiza faz: ${res.status} ${res.statusText}`
-          );
+          throw new Error(`Erro ao atualiza faz: ${res.status} ${res.statusText}`);
         }
         const updated: FaqTasy = await res.json();
 
@@ -73,19 +74,63 @@ const useFaqTasy = () => {
     [apiUrl]
   );
 
+  // DELETE (remove do backend e do estado local)
+  const deleteFaqTasy = useCallback(
+    async (id: number): Promise<boolean> => {
+      setDeleteError(null);
+      setDeletingFaqId(id);
+      try {
+        const res = await fetch(`${apiUrl}/${id}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!res.ok) {
+          // tenta mensagem do backend
+          let msg = `Erro ao excluir: ${res.status} ${res.statusText}`;
+          try {
+            const j = await res.json();
+            if (j?.message) msg = String(j.message);
+            if (j?.error) msg = String(j.error);
+          } catch {}
+          throw new Error(msg);
+        }
+
+        // remove do estado local
+        setFaqTasy((prev) => (Array.isArray(prev) ? prev.filter((t) => Number(t.id) !== Number(id)) : prev));
+        return true;
+      } catch (e: any) {
+        setDeleteError(e?.message ?? "Falha ao excluir faq");
+        return false;
+      } finally {
+        setDeletingFaqId(null);
+      }
+    },
+    [apiUrl]
+  );
+
   useEffect(() => {
     fetchFaq();
   }, [fetchFaq]);
 
   return {
+    // dados
     faqtasy,
     loadingFaqTasy,
     errorFaqTasy,
     apiUrl,
+
+    // reload
     refreshFaqTasy: fetchFaq,
+
+    // update
     updatingFaqTasy,
     updateError,
     updateFaqTasyPartial,
+
+    // delete
+    deletingFaqId,
+    deleteError,
+    deleteFaqTasy,
   };
 };
 

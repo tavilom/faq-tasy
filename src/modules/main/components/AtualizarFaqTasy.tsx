@@ -30,6 +30,7 @@ const AtualizarFaqTasy = ({
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sendSuccess, setSendSuccess] = useState<boolean>(false);
+  const [triedSubmit, setTriedSubmit] = useState(false);
 
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -44,6 +45,7 @@ const AtualizarFaqTasy = ({
     setFileError(null);
     setSendError(null);
     setSendSuccess(false);
+    setTriedSubmit(false);
   }, [faqSelecionada?.id, open]);
 
   const handleChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (e) => {
@@ -70,12 +72,15 @@ const AtualizarFaqTasy = ({
     setFile(f);
   };
 
+  // Helpers
+  const trimOrUndefined = (v?: any) => {
+    const s = typeof v === "string" ? v.trim() : v;
+    return s ? String(s) : undefined;
+  };
+
   // PATCH multipart único: envia video (se houver) + campos preenchidos
   const patchFaqMultipart = async (id: number, fields: Partial<FaqTasy>, video?: File | null) => {
-    const url =
-      // se apiUrl já é .../faq_tasy, então fica /faq_tasy/:id
-      `${baseEndpoint}/${id}`;
-
+    const url = `${baseEndpoint}/${id}`;
     const fd = new FormData();
 
     // arquivo (nome do campo TEM QUE SER 'video')
@@ -83,16 +88,15 @@ const AtualizarFaqTasy = ({
 
     // anexa só campos definidos (evita sobrescrever com null/empty)
     const addIfDefined = (key: keyof FaqTasy, val: any) => {
-      if (val === undefined) return;
-      // back já transforma ""/null -> undefined quando inválido (pelo DTO)
-      fd.append(String(key), String(val));
+      const v = trimOrUndefined(val);
+      if (v === undefined) return;
+      fd.append(String(key), String(v));
     };
 
     addIfDefined("question", fields.question);
     addIfDefined("description", fields.description);
-    addIfDefined("id_ws", (fields as any).id_ws);
-    // NÃO envie nome_video manualmente quando mandar arquivo. Se NÃO houver arquivo
-    // e você quer atualizar manualmente, descomente:
+    addIfDefined("id_ws", (fields as any)?.id_ws);
+    // NÃO envie nome_video manualmente quando mandar arquivo.
     if (!video) addIfDefined("nome_video", fields.nome_video);
 
     const res = await fetch(url, { method: "PATCH", body: fd });
@@ -103,22 +107,43 @@ const AtualizarFaqTasy = ({
     return res.json() as Promise<FaqTasy>;
   };
 
+  // ---------- validações obrigatórias ----------
+  const questionVal = (formData.question ?? "").toString().trim();
+  const descriptionVal = (formData.description ?? "").toString().trim();
+  const nomeVideoVal = (formData.nome_video ?? "").toString().trim();
+
+  const isQuestionFilled = questionVal.length > 0;
+  const isDescriptionFilled = descriptionVal.length > 0;
+
+  // vídeo é considerado "presente" se há arquivo escolhido OU se há nome_video preenchido (mantém o atual)
+  const isVideoProvided = !!file || nomeVideoVal.length > 0;
+  const isVideoValid = isVideoProvided && !fileError;
+
+  const canSubmit = isQuestionFilled && isDescriptionFilled && isVideoValid && !sending;
+
   const handleSalvar = async () => {
     if (!faqSelecionada?.id) return;
 
+    setTriedSubmit(true);
     setSendError(null);
     setSendSuccess(false);
-    setSending(true);
 
+    // bloqueia se faltar algo
+    if (!canSubmit) {
+      setSendError("Preencha todos os campos obrigatórios antes de salvar.");
+      return;
+    }
+
+    setSending(true);
     try {
       // monta payload textual (apenas o que o usuário preencheu)
       const payload: Partial<FaqTasy> = {
-        question: formData.question ?? undefined,
-        description: formData.description ?? undefined,
-        // se nenhum arquivo foi escolhido e o usuário alterou manualmente:
-        nome_video: file ? undefined : (formData.nome_video ?? undefined),
+        question: trimOrUndefined(formData.question),
+        description: trimOrUndefined(formData.description),
+        // se nenhum arquivo foi escolhido, permite atualizar/manter nome_video
+        nome_video: file ? undefined : trimOrUndefined(formData.nome_video),
         // id_ws se existir no teu tipo:
-        // id_ws: (formData as any).id_ws ?? undefined,
+        // id_ws: trimOrUndefined((formData as any).id_ws),
       };
 
       await patchFaqMultipart(faqSelecionada.id, payload, file);
@@ -167,6 +192,9 @@ const AtualizarFaqTasy = ({
             variant="outlined"
             size="medium"
             disabled={busy}
+            required
+            error={triedSubmit && !isQuestionFilled}
+            helperText={triedSubmit && !isQuestionFilled ? "Informe a pergunta." : undefined}
           />
 
           <TextField
@@ -180,18 +208,29 @@ const AtualizarFaqTasy = ({
             multiline
             minRows={3}
             disabled={busy}
+            required
+            error={triedSubmit && !isDescriptionFilled}
+            helperText={triedSubmit && !isDescriptionFilled ? "Informe a descrição." : undefined}
           />
 
           <TextField
-            label="Nome do vídeo (opcional)"
+            label="Nome do vídeo"
             name="nome_video"
             value={formData.nome_video ?? ""}
             onChange={handleChange}
             fullWidth
             variant="outlined"
             size="medium"
-            disabled={busy || !!file} // se vai enviar arquivo, não edita nome manualmente
-            helperText={file ? "Será substituído pelo nome do arquivo enviado" : undefined}
+            disabled={busy || !!file}
+            required
+            helperText={
+              file
+                ? "Será substituído pelo nome do arquivo enviado"
+                : triedSubmit && !isVideoProvided
+                ? "Selecione um arquivo de vídeo ou informe o nome do vídeo."
+                : undefined
+            }
+            error={triedSubmit && !isVideoProvided}
           />
 
           {/* Upload de vídeo */}
@@ -212,6 +251,9 @@ const AtualizarFaqTasy = ({
               </Typography>
             )}
             {fileError && <Alert severity="warning">{fileError}</Alert>}
+            {triedSubmit && !isVideoProvided && !fileError && (
+              <Alert severity="warning">Selecione um vídeo ou preencha o nome do vídeo.</Alert>
+            )}
           </Box>
         </Box>
       </DialogContent>
@@ -226,7 +268,7 @@ const AtualizarFaqTasy = ({
           onClick={handleSalvar}
           color="primary"
           variant="contained"
-          disabled={busy || !!fileError}
+          disabled={busy || !!fileError || !canSubmit}
           startIcon={busy ? <CircularProgress size={18} /> : null}
         >
           Salvar Alterações
